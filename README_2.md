@@ -3,7 +3,7 @@
 > Decoding emotional valence from brain activity during naturalistic language comprehension — bridging linguistics, neuroimaging, and machine learning.
 
 **Status:** In active development (Brainhack School 2026 final project)
-**Author:** Thach Thao Le (Jessica) — PhD candidate, Linguistics, National Taiwan University
+**Author:** Thach Thao Le (Jessica) — PhD Student, Linguistics, National Taiwan University
 
 ---
 
@@ -112,7 +112,6 @@ This project builds on skills developed during **Brainhack School 2026** (NTU Ta
 ## Contact
 
 - GitHub: [@jessicathao](https://github.com/jessicathao)
-- Affiliation: Linguistics PhD program, National Taiwan University
 - Research interests: Sociolinguistics, corpus linguistics, computational language processing, brain decoding
 
 ---
