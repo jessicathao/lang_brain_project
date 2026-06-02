@@ -205,3 +205,29 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# ---- Project-specific: large scientific data (never upload) ----
+# Brain images and neuroimaging data
+*.nii
+*.nii.gz
+*.mat
+*.gii
+*.parquet
+ds004892/
+ds004872/
+
+# Film media (large; obtain separately)
+*.mp4
+*.mov
+*.mkv
+*.avi
+*.wav
+*.mp3
+*.m4a
+
+# macOS junk
+.DS_Store
+
+# Keep small text outputs that ARE the work
+!data/transcripts/*.json
+!data/subs/*.srt

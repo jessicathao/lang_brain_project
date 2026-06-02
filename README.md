@@ -1,120 +1,117 @@
-[README_2.md](https://github.com/user-attachments/files/28140215/README_2.md)
-# Emotional Language fMRI Decoding
+# lang_brain_project
 
-> Decoding emotional valence from brain activity during naturalistic language comprehension — bridging linguistics, neuroimaging, and machine learning.
+**Validating transformer-generated emotion labels against human consensus in naturalistic film fMRI**
 
-**Status:** In active development (Brainhack School 2026 final project)
-**Author:** Thach Thao Le (Jessica) — PhD student, Linguistics, National Taiwan University
+Status: In active development (Brainhack School 2026 final project)
+Author: Thach Thao Le (Jessica) — PhD student, Linguistics, National Taiwan University
 
----
+## Project overview
 
-## Project Overview
+This project tests whether emotion labels generated automatically by a transformer
+language model (BERT) agree with human consensus annotations, using the **Emo-FilM**
+dataset — fMRI and emotion ratings collected while participants watched short films.
 
-This project investigates how the brain processes emotional content during naturalistic language comprehension by building an end-to-end fMRI brain-decoding pipeline. The core question: **can we predict the emotional valence of language stimuli from brain activity patterns alone?**
+The central question: **can an automatic NLP method label the emotional valence of
+film dialogue well enough to substitute for slow, costly human annotation?**
 
-The pipeline combines three components:
+### Two research questions
+1. **Agreement (committed):** Do BERT-generated valence labels, derived from film
+   transcripts, correlate with the human consensus annotations?
+2. **Brain decoding (stretch):** Can those labels decode emotional valence from the
+   fMRI BOLD signal as well as human labels can?
 
-1. **NLP-driven label generation** — A transformer-based sentiment classifier (BERT) automatically labels naturalistic language stimuli (sentences from open fMRI corpora) with emotional valence.
-2. **fMRI feature extraction** — Brain activity patterns are extracted from open neuroimaging datasets using `nilearn`, focusing on language and emotion-relevant regions.
-3. **Machine learning decoder** — SVM and MLP classifiers are trained to predict emotional valence from voxel-level brain activity, evaluated with cross-validation.
+## Why it matters
+- **Label provenance:** any decoder is only as good as its labels; knowing where
+  automatic labels fail is understudied.
+- **Scale:** if automatic labels prove reliable, many unlabeled naturalistic datasets
+  become usable for affective neuroscience.
+- **Extensible:** the same method can later move to cross-linguistic data, including
+  under-represented languages such as Vietnamese.
 
----
+This measures emotion in film *via language* (spoken dialogue), not language
+processing in isolation — a deliberate, scoped first test.
 
-## Why This Matters
+## Data
 
-This work sits at the intersection of computational linguistics, cognitive neuroscience, and brain-computer interface (BCI) research:
+**Emo-FilM** (Morgenroth et al., 2025, *Scientific Data* 12:684), on OpenNeuro:
+- fMRI: [ds004892](https://openneuro.org/datasets/ds004892) (CC0)
+- Annotations: [ds004872](https://openneuro.org/datasets/ds004872) (CC0)
+- 14 short films, 30 participants (3 Tesla), 44 annotators, 50 emotion items.
+- TR = 1.3 s. Preprocessed BOLD available in MNI space.
 
-- **Non-invasive brain decoding** — Demonstrates that meaningful affective brain states can be decoded from non-invasive fMRI signals, with direct conceptual relevance to BCI systems (e.g. Neuralink-style applications) which face the same fundamental problem at a different scale and resolution.
-- **Addresses a data gap** — Most open fMRI datasets lack emotion labels, limiting their use in affective neuroscience research. Automated NLP labeling offers a scalable solution.
-- **Linguistic representation** — Most neurolinguistic decoding research focuses on English. This project lays groundwork for extending to under-represented languages such as Vietnamese.
+The **human valence signal** is taken from the appraisal item *PleasantOther* (the
+highest-agreement item in the dataset), with a positive-minus-negative emotion
+contrast as a backup.
 
----
+## Method
 
-## Technical Stack
+```
+Film transcript  ──►  BERT sentiment  ──►  valence (1 Hz)  ──┐
+(.srt or Whisper)     (per segment)        NaN if silent     │
+                                                             ▼
+                            Pearson correlation  ◄──  Human consensus
+                            (per film, vs ~0.40        (PleasantOther, 1 Hz)
+                             human–human ceiling)
+                                                             │
+                                            (stretch) ───────┘
+                            Train SVM to decode valence from BOLD,
+                            human labels vs BERT labels, compare accuracy
+```
+
+- **Committed deliverable:** BERT labels + valence proxy + per-film correlation
+  against the human consensus. Pure NLP + statistics; no fMRI preprocessing on the
+  critical path.
+- **Stretch goal:** brain decoding with a linear SVM (leave-one-film-out CV),
+  comparing human vs BERT labels.
+
+## Technical stack
 
 | Component | Tool |
 |---|---|
-| fMRI data handling | `nilearn`, `nibabel` |
-| Sentiment labels | Hugging Face Transformers (BERT) |
-| Machine learning | `scikit-learn` (SVM, logistic regression) |
-| Deep learning | PyTorch (MLP) |
+| fMRI data handling | nilearn, nibabel |
+| Sentiment labels | Hugging Face Transformers (`phanerozoic/BERT-Sentiment-Classifier`) |
+| Machine learning | scikit-learn (SVM) |
+| Transcription | OpenAI Whisper (for films without subtitles) |
 | Environment | Conda (Python 3.11), macOS Apple Silicon |
 | Version control | Git / GitHub |
 
----
-
-## Methodology
-
+## Repository layout
 ```
-Open fMRI dataset
-       │
-       ▼
-┌────────────────┐      ┌─────────────────────┐
-│ Brain activity │      │ Linguistic stimuli  │
-│  (voxel data)  │      │  (sentences/text)   │
-└────────┬───────┘      └──────────┬──────────┘
-         │                         │
-         │                         ▼
-         │              ┌─────────────────────┐
-         │              │ BERT sentiment      │
-         │              │ classifier          │
-         │              └──────────┬──────────┘
-         │                         │
-         │                         ▼
-         │              ┌─────────────────────┐
-         │              │ Emotional valence   │
-         │              │ labels              │
-         │              └──────────┬──────────┘
-         │                         │
-         ▼                         ▼
-       ┌─────────────────────────────┐
-       │  SVM / MLP decoder          │
-       │  (cross-validated)          │
-       └──────────────┬──────────────┘
-                      │
-                      ▼
-       Decoded emotional state from brain activity
+src/          analysis and pipeline scripts
+data/
+  subs/         film subtitle files (.srt)
+  transcripts/  processed transcripts (.json)
+docs/         notes and documentation
+notebooks/    Jupyter notebooks
+results/      figures and outputs
 ```
+Large data (brain images, film media) is gitignored and not stored here.
 
----
-
-## Roadmap
-
-- [x] Project proposal and design
-- [x] Tool selection (BERT for sentiment, SVM/MLP for decoding)
-- [ ] Open fMRI dataset selection (candidates: LPPC-fMRI, Narratives, MOUS)
-- [ ] BERT sentiment label generation on stimulus text
-- [ ] Label validation on small annotated subset
-- [ ] fMRI preprocessing and masking
-- [ ] Decoder training and cross-validation
-- [ ] Results visualization and statistical analysis
+## Progress
+- [x] Project proposal and design (pitched June 2026)
+- [x] Tool selection (BERT for sentiment, SVM for decoding)
+- [x] Dataset selection: Emo-FilM (ds004892 / ds004872)
+- [x] fMRI structure explored; preprocessing confirmed available in MNI space
+- [x] BERT model validated on SST-2 (86.3% accuracy)
+- [x] First transcript produced (Sintel, from official subtitles)
+- [ ] Extract PleasantOther human valence signal from ds004872
+- [ ] Resolve subtitle/film-time alignment
+- [ ] BERT valence vs human consensus — first correlation
+- [ ] Remaining transcripts (Tears of Steel via .srt; rest via Whisper)
+- [ ] Brain decoding (stretch)
 - [ ] Final report and Singapore symposium presentation
-- [ ] Extension to multilingual / Vietnamese stimuli (future work)
-
----
 
 ## Background
+Builds on Brainhack School 2026 (NTU Taiwan): fMRI decoding with SVM (Haxby,
+84.5%), MLP in PyTorch (82.8%), open neuroimaging data handling (ADHD 200,
+ABIDE II), and reproducible-research practices (Git, FAIR, OSF).
 
-This project builds on skills developed during **Brainhack School 2026** (NTU Taiwan):
-
-- fMRI brain decoding with SVM (Haxby dataset — 84.5% test accuracy)
-- MLP implementation in PyTorch and Keras (82.8% test accuracy on Haxby)
-- Open neuroimaging data handling (ADHD 200, ABIDE II)
-- Reproducible research practices (Git, FAIR principles, OSF)
-
----
+## References
+- Morgenroth, E., et al. (2025). Emo-FilM: A multimodal dataset for affective
+  neuroscience using naturalistic stimuli. *Scientific Data, 12*, 684.
 
 ## Acknowledgments
-
-- **Brainhack School 2026** organizers and TAs across Taipei and Singapore hubs
-
----
+Brainhack School 2026 organizers and TAs across the Taipei and Singapore hubs.
 
 ## Contact
-
-- GitHub: [@jessicathao](https://github.com/jessicathao)
-- Research interests: Sociolinguistics, corpus linguistics, computational language processing, brain decoding
-
----
-
-*Code and analysis notebooks will be added to this repository as the project progresses.*
+GitHub: [@jessicathao](https://github.com/jessicathao)
